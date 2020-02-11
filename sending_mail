@@ -1,0 +1,24 @@
+#!/bin/sh
+
+#anow=$(date -Iseconds) # Datum
+
+empf=$1
+subject=$2
+text=$3
+
+mst="To:"$empf
+mst=${mst}"\n"
+
+#if [ "$1" = "1" ]; then # Success
+#   mst=${mst}"Subject: DOI Scout finished\n"
+#fi
+
+mst=${mst}$subject"\n"
+
+#if [ "$1" = "2" ]; then # Error
+#   mst=${mst}"Subject: DOI Scout ERROR\n"
+#fi
+
+mst=${mst}$text"\n"
+
+echo $mst | /usr/sbin/ssmtp $empf
