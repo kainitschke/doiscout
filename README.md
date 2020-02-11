@@ -7,6 +7,7 @@ Please see the manual (manual.pdf) for all information.
 **Python and Packages**
 
 The DoiScout was written in Python 3.6. To run, it requires that the following software is installed (note that alls required software is available free of charge):
+
 • Python 3. Any software version newer or equal to Python 3.6 should work. Older version might work. You can get more information on as well as download Python 3 on https://www.python.org/ .
 • Mozilla Firefox is the most common free and open source web browser.
 • The geckodriver is needed so the DoiScout is able to automatically operate Mozilla Firefox. It can be downloaded for free here: https: //github.com/mozilla/geckodriver/releases . Download the file geckodriver and store it in the same folder that you have extracted the DoiScout to.
