@@ -1,8 +1,36 @@
 # doiscout
+
+_Please see the manual (manual.pdf) for more information._
+
+
 The DoiScout – an automatic tool for gathering information about registered clinical trials and resulting publications
 
-_Please see the manual (manual.pdf) for all information._
+**Description**
+The DoiScout is a tool that facilitates large-scale literature reviews and citation 
+analyses. It was developed as part of the IIT project, “Impact of therapeutic
+investigator initiated trials on medical practice“ (DFG grant number BL 1395/2-
+1), in order to make the process of extensive literature searches more time
+effective.
 
+The DoiScout offers two primary features. The first main feature is the
+automatic identification of publications that reference a particular study number
+(e.g. NCT02179424) as their source. Information about relevant publications
+is extracted and presented in a list that is formatted so that information can
+be passed on to other software programs for further processing. Note that the
+DoiScout does not automatically assess the relevance or validity of the search
+results.
+
+The second primary feature of the DoiScout is the identification of citations.
+Databases behind such platforms as PubMed and Web of Science can be used
+to identify articles, systematic reviews and clinical guidelines in which a given
+article has been cited. The DoiScout extracts information about these texts and
+provides it to the user in a workable format. In addition, the DoiScout can be
+used to identify publications that go on to cite texts citing the original source,
+thus providing a comprehensive insight into the extent of a project’s academic
+impact.
+
+In addition to these two primary features, the DoiScout includes several
+secondary features, which focus on facilitating workflow.
 
 **Python and Packages**
 
