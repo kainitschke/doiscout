@@ -62,13 +62,14 @@ def parse_awmf_results(cont, result):
     start       = 0
     while start > -1:
         # hit quot
-        start   = cont.find("Treffergenauigkeit", start)
-        start   = cont.find(":", start) + 1
-        end     = cont.find("%", start)
-        result[2].append("%1.3f" % (float(cont[start:end])/100))
+        # start   = cont.find("Treffergenauigkeit", start)
+        # start   = cont.find(":", start) + 1
+        # end     = cont.find("%", start)
+        # result[2].append("%1.3f" % (float(cont[start:end])/100))
 
         # Title
-        start   = cont.find("title=", end)
+#        start   = cont.find("title=", end)
+        start = cont.find("title=", start)
         start   = cont.find('"', start) + 1
         end     = cont.find('"', start)
         result[1].append(cont[start : end].strip())
@@ -116,6 +117,7 @@ def parse_awmf_results(cont, result):
         result[6].append(url)
 
         result[0].append(" ")
+        result[2].append(" ")
         result[7].append("1")
         result[8].append("0")
         result[9].append("0")

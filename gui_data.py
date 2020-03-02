@@ -80,9 +80,15 @@ def create_gui(mode, keep):
 
     if mode == "guidelines":
         title                           = "DOI Scout: Cited in Guidelines"
-        elements.labels.title           = tkinter.Label(master=gui, text="Set path to DoiScout-File below:")
-        elements.buttons.run            = tkinter.Button(master=gui, text="Run",                command=lambda: gui_action_guidelines(elements, keep))
-        elements.buttons.read_doi_scout  = tkinter.Button(master=gui, text="Read DoiScout File", command=lambda: gui_action_read_doi_scout(elements, keep))
+        if keep.guide_mode == "studreg":
+            elements.labels.title           = tkinter.Label(master=gui, text="Enter Study Register Numbers:")
+            elements.buttons.read_raw       = tkinter.Button(master=gui, text="Read RAW File",      command=lambda: gui_action_read_raw(elements))
+        elif keep.guide_mode == "doi":
+            elements.labels.title           = tkinter.Label(master=gui, text="Set path to DoiScout-File below:")
+            elements.buttons.read_doi_scout = tkinter.Button(master=gui, text="Read DoiScout File", command=lambda: gui_action_read_doi_scout(elements, keep))
+
+        elements.buttons.run            = tkinter.Button(master=gui, text="Run",                    command=lambda: gui_action_guidelines(elements, keep))
+
         elements.checks.extract_bib     = tkinter.Checkbutton(master=gui, text="Extract Bib Info")
         #elements.buttons.read_wos      = tkinter.Button(master=gui, text="Read WoS File",  command=lambda: gui_action_read_wos(elements))
         #elements.buttons.read_ncbi     = tkinter.Button(master=gui, text="Read ncbi File", command=lambda: gui_action_read_ncbi(elements))
@@ -130,6 +136,18 @@ def create_gui(mode, keep):
         elements.checks.nice        = tkinter.Checkbutton(master=gui, text="NICE")
         elements.checks.tripdb      = tkinter.Checkbutton(master=gui, text="Trip DB")
 
+    if mode == "guidelines_mode":
+        draw_gui(gui, gui_sett, keep, type="mode_guidelines")
+        gui_sett.height             = gui_sett.subguideheight
+        gui_sett.width              = gui_sett.subguidewidth
+        gui_sett.xpos               = gui_sett.subguidexpos
+        gui_sett.ypos               = gui_sett.subguideypos
+
+        title                       = "DOI Scout: Cited in Guidelines Mode"
+        elements.labels.title       = tkinter.Label(master=gui, text="Choose what to search:")
+        elements.buttons.guidelines_studreg = tkinter.Button(master=gui, text="Study Register Number",          command=lambda: gui_guidelines_mode_studreg(gui, elements))
+        elements.buttons.guidelines_doi     = tkinter.Button(master=gui, text="with Bibliographic Info",              command=lambda: gui_guidelines_mode_doi(gui, elements))
+
     gui.configure(background="black")  # Background Color as Black
 
     gui.title(title)
@@ -148,6 +166,7 @@ def display_elements(elements, gui_sett, keep = list()):
     subs_lines                  = 37 + 1
     study_reg_options_lines     =  9 + 1
     guidelines_options_lines    =  5 + 1
+    guidelines_mode_lines       =  1.8 + 1
 
     try:    # main
         main_display_elements(elements.buttons.extract_bib_info,    0, gui_sett, rand, abstand, main_lines)
@@ -251,7 +270,7 @@ def display_elements(elements, gui_sett, keep = list()):
     except: pass
     try:    # Label Main / Title
         aline = 0
-        sub_display_elements(element=elements.labels.title, aline=aline, column_start=0, column_end=.8, rand = rand, subs_lines = subs_lines, abstand = abstand, gui_sett = gui_sett, background="black", foreground="white", align="w")
+        sub_display_elements(element=elements.labels.title, aline=aline, column_start=0, column_end=.8, rand=rand, subs_lines = subs_lines, abstand = abstand, gui_sett = gui_sett, background="black", foreground="white", align="w")
     except: pass
     try:    # Help (open Help PDF)
         aline = -.5
@@ -369,7 +388,15 @@ def display_elements(elements, gui_sett, keep = list()):
         sub_display_elements(element=elements.buttons.guidelines_options_okay, aline=aline, column_start=.33, column_end=.66, rand = rand, subs_lines = guidelines_options_lines, abstand = abstand, gui_sett = gui_sett)
     except: pass
 
-    #return elements
+    ###################### guidelines mode ##############################
+    try:  # option: Study Register Numbers (StudReg)
+        aline = 0.4
+        sub_display_elements(element=elements.buttons.guidelines_studreg, aline=aline, column_start=0, column_end=1, rand=rand, subs_lines=guidelines_mode_lines, abstand=abstand, gui_sett=gui_sett)
+    except: pass
+    try:  # option: Study Register Numbers (StudReg)
+        aline = 1.6
+        sub_display_elements(element=elements.buttons.guidelines_doi, aline=aline, column_start=0, column_end=1, rand=rand, subs_lines=guidelines_mode_lines, abstand=abstand, gui_sett=gui_sett)
+    except: pass
 
 def main_display_elements(button, line, gui_sett, rand, abstand, main_lines, fontsize = 12):
     button.place(  x=rand, y=rand + ((gui_sett.height - rand) / main_lines) * line , width=gui_sett.width - rand * 2, height=((gui_sett.height - rand) / main_lines)- abstand)
@@ -459,7 +486,8 @@ def gui_cited_by(gui_old, keep=list()):
 def gui_guidelines(gui_old, keep=list()):
     save_gui_position(gui_old, keep)
     gui_old.destroy()
-    gui     = create_gui("guidelines_options", keep)
+    gui     = create_gui("guidelines_mode", keep)
+    #gui     = create_gui("guidelines_options", keep)
 
 def gui_is_in_cochrane(gui_old, keep=list()):
     save_gui_position(gui_old, keep)
@@ -824,7 +852,7 @@ def gui_action_is_in_cochrane(elements):
 ########################################################
 
 def gui_action_guidelines(elements, keep):
-    from definitions import create_timestamp, read_info_doi_scout_file, initialize_http, initialize_browser, search_citations_in_guidelines, only_first_author
+    from definitions import create_timestamp, read_info_doi_scout_file, initialize_http, initialize_browser, search_citations_in_guidelines, search_study_reg_ids_in_guidelines, only_first_author, preprocess_ids
     from output_defs import write_output_guideline
 
     # save configs for next time
@@ -837,27 +865,36 @@ def gui_action_guidelines(elements, keep):
     else:
         keep.extract_bib  = 1
 
-    try: # ifkeep.afile == 1:     # read if there is a file or other information
-        afile       = elements.edits.dois.get("1.0", "end").replace("\n","")
-        idxs        = ["DOI", "Title", "Author"]
-        data, header= read_info_doi_scout_file(afile, idxs)
-    except:
-        print("ERROR. DoiScout File not found or malformed.")
-        return
-
-    data[2]         = only_first_author(data[2])
     http            = initialize_http()
 
     gecko_path      = check_geckodriver(elements)
     folders         = check_download_folder(elements)
     browser         = initialize_browser(gecko_path, folders)
 
-    result, browser = search_citations_in_guidelines(data, http, browser, keep)
+    if keep.guide_mode == "studreg":
+        stud_ids    = elements.edits.dois.get("1.0", "end")
+        stud_ids    = preprocess_ids(stud_ids, ["-"])
+
+        result, browser = search_study_reg_ids_in_guidelines(stud_ids, http, browser, keep)
+
+    elif keep.guide_mode == "doi":
+        try: # ifkeep.afile == 1:     # read if there is a file or other information
+            afile   = elements.edits.dois.get("1.0", "end").replace("\n","")
+            idxs    = ["DOI", "Title", "Author"]
+            data, header    = read_info_doi_scout_file(afile, idxs)
+        except:
+            print("ERROR. DoiScout File not found or malformed.")
+            return
+
+        data[2]     = only_first_author(data[2])
+
+        result, browser = search_citations_in_guidelines(data, http, browser, keep)
+
 
     try: browser.close()
     except: pass
 
-    write_output_guideline(result, folders, timestamp)
+    write_output_guideline(result, folders, timestamp, keep)
 
     print("Finished")
 
@@ -877,6 +914,22 @@ def gui_guidelines_options_apply(gui, elements):
     keep.nice           = elements.checks.nice.value.get()
     keep.tripdb         = elements.checks.tripdb.value.get()
     gui                 = create_gui("guidelines", keep)
+
+########################################################
+################# Guidelines - Mode ####################
+########################################################
+
+def gui_guidelines_mode_studreg(gui, elements):
+    gui.destroy()
+    keep                = create_keep
+    keep.guide_mode     = "studreg"
+    gui                 = create_gui("guidelines_options", keep)
+
+def gui_guidelines_mode_doi(gui, elements):
+    gui.destroy()
+    keep                = create_keep
+    keep.guide_mode     = "doi"
+    gui                 = create_gui("guidelines_options", keep)
 
 ########################################################
 ################### to endnote #########################
@@ -1144,6 +1197,14 @@ def draw_gui(gui, gui_sett, keep, type="main"):
         except:
             gui.geometry("%1.0fx%1.0f+%1.0f+%1.0f" % (gui_sett.subguidewidth, gui_sett.subguideheight, gui_sett.subguidexpos, gui_sett.subguideypos))
 
+    elif type == "mode_guidelines":
+        try:
+            keep.xpos
+            keep.ypos
+            gui.geometry("%1.0fx%1.0f+%1.0f+%1.0f" % (gui_sett.subguidewidth, gui_sett.subguideheight, keep.xpos, keep.ypos))
+        except:
+            gui.geometry("%1.0fx%1.0f+%1.0f+%1.0f" % (gui_sett.subguidewidth, gui_sett.subguideheight, gui_sett.subguidexpos, gui_sett.subguideypos))
+
 
 
 ########################################################
@@ -1195,6 +1256,8 @@ class initialize_buttons:
         self.guidelines             = list()
         self.guidelines_options_okay= list()
         self.read_doi_scout         = list()
+        self.guidelines_studreg     = list()
+        self.guidelines_doi         = list()
 
 class initialize_edits:
     def __init__(self):
@@ -1252,3 +1315,4 @@ class create_keep:
         self.afile                  = 0
         self.extract_bib            = 0
         self.configfile             = ""
+        self.guide_mode             = ""

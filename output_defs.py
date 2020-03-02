@@ -167,7 +167,7 @@ def write_linewise_goofy(afile, text, no_quotation=False):
         #astring     = astring.replace('"', "'")
         afile.write(astring)
 
-def write_output_guideline(bib_info, folders, timestamp):
+def write_output_guideline(bib_info, folders, timestamp, keep = False):
     #import xlwt
     from pubmed_plugins import add_headers_bib_info, empty_bib
     from definitions import empty_guidelines
@@ -176,7 +176,7 @@ def write_output_guideline(bib_info, folders, timestamp):
     afile           = folders.main + timestamp + "_Guideline_Search" + ".xlsx"
 
     header          = [item[0] for item in add_headers_bib_info(empty_bib())]
-    header[0:0]     = empty_guidelines(title="alternative")
+    header[0:0]     = empty_guidelines(title="alternative", keep=keep)
 
     data            = DataFrame(bib_info).transpose()
     data.columns    = header

@@ -846,3 +846,24 @@ def add_single_result(results, studyID, input, url, method):
     results[1].append(string_2_html(input, direction="from_html"))                    # add doi or title or other
     results[2].append(url)                      # add url
     results[3].append(method)                   # method that found the ref (e.g. Pubmed, google scholar, aso.)
+
+##################################################################
+
+def identify_register(name):
+    from definitions import simplify_text
+    if simplify_text(name).find("drks") > -1:
+        return "drks"
+    elif simplify_text(name).find("nct") > -1:
+        return "nct"
+    elif simplify_text(name).find("isrctn") > -1:
+        return "isrctn"
+    else:
+        return "eudract"
+
+##################################################################
+
+def add_space_ISRCTN(name, spez_char = " "):
+    return name[0:len("ISRCTN")] + spez_char + name[(len("ISRCTN")) : len(name)]
+
+def add_space_DRKS(name, spez_char = " "):
+    return name[0:len("DRKS")]   + spez_char + name[(len("DRKS"))   : len(name)]

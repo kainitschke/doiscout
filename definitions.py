@@ -481,12 +481,15 @@ def compare_title(title_a, title_b):
     else:
         return False
 
-def empty_guidelines(title = False):
+def empty_guidelines(title = False, keep=False):
     header = ["DOI", "Title", "hit quot", "id", "evidence-level", "society", "guideline-url", "in_awmf", "in_nice", "in_tripdb"]
     if title == True:
         return header
     elif title == "alternative":
-        return ["Parent-DOI", "hit quot", "id", "evidence-level", "society", "guideline-url", "in_awmf", "in_nice", "in_tripdb"]
+        if keep.guide_mode == "studreg":
+            return ["Parent-StudRegID", "hit quot", "id", "evidence-level", "society", "guideline-url", "in_awmf", "in_nice", "in_tripdb"]
+        elif keep.guide_mode == "doi":
+            return ["Parent-DOI", "hit quot", "id", "evidence-level", "society", "guideline-url", "in_awmf", "in_nice", "in_tripdb"]
     else:
         result  = []
         for i in range(0, len(header)):
@@ -1146,7 +1149,7 @@ def download_html_as_pdf(name, url, afolder):
     pdfkit.from_url(url, afolder + name + ".pdf", options=options)
 
 ###################################################################
-#################### Guidelines ###################################
+############ Guidelines with bib. info. ###########################
 ###################################################################
 
 def search_citations_in_guidelines(data, http, browser, keep, silent = False):
@@ -1247,6 +1250,101 @@ def unify_collector(collector):
 
     return result
 
+###################################################################
+############### Guidelines Study Reg No.  #########################
+###################################################################
+
+def search_study_reg_ids_in_guidelines(data, http, browser, keep, silent = False):
+    from awmf_plugin import search_on_awmf_site
+    from nice_plugin import search_on_nice_site
+    from plugin_tripdb import guideline_search_tripdb
+    from pubmed_plugins import empty_bib
+    from register_search import identify_register, add_space_ISRCTN, add_space_DRKS
+    import datetime
+
+    result_size     = len(empty_guidelines())
+    collection      = empty_bib()
+    for i in range(0, result_size - 1):
+        collection.append([])
+
+    if silent == False:
+        show_string = 'Searching Guidelines'
+        printProgressBar(0, len(data), prefix=show_string, suffix="remaining: 0:00:00:00", length=50)
+        start_time  = datetime.datetime.now()
+
+    for i in range(0, len(data)):
+
+        reg         = identify_register(data[i])
+
+        result      = [[], [], []]
+
+        ## AWMF
+        if keep.awmf == 1:
+            if reg == "isrctn":
+                result[0], browser  = search_on_awmf_site(add_space_ISRCTN(data[i]), browser)
+            else:
+                result[0], browser  = search_on_awmf_site(data[i], browser)
+        else:
+            result[0]           = empty_guidelines()
+
+        ## NICE
+        if keep.nice == 1:
+            if reg == "isrctn":
+                result[1]           = search_on_nice_site('"' + data[i]                         + '"' + ' or ' +
+                                                          '"' + add_space_ISRCTN(data[i])       + '"' + ' or ' +
+                                                          '"' + add_space_ISRCTN(data[i], ":")  + '"' + ' or ' +
+                                                          '"' + add_space_ISRCTN(data[i], ": ") + '"',
+                                                          http, "evidence")
+            else:
+                result[1]           = search_on_nice_site('"' + data[i] + '"',http, "evidence")
+        else:   result[1]           = empty_guidelines()
+
+        ## TripDB
+        if keep.tripdb == 1:
+            if reg == "isrctn":
+                result[2], browser  = guideline_search_tripdb(browser,  '"' + data[i]                         + '"' + ' OR ' +
+                                                                        '"' + add_space_ISRCTN(data[i])       + '"')
+            elif reg == "eudract":
+                result[2]           = empty_guidelines()
+            elif reg == "drks":
+                result[2], browser  = guideline_search_tripdb(browser, '"' + data[i] + '"' + ' OR ' +
+                                                             '"' + add_space_DRKS(data[i]) + '"')
+            else:
+                result[2], browser  = guideline_search_tripdb(browser,  '"' + data[i] + '"')
+        else:   result[2]           = empty_guidelines()
+
+        result                                  = unify_collector(result)
+
+
+        if result == empty_guidelines(): ## nothing found; create empty line
+            collection[0].append(data[i])
+            for n in range(1, len(collection)):
+                collection[n].append(" ")
+
+        else:
+            # try to get more information about the guidelines
+            for n in range(0, len(result[0])):
+                #print("  %d - %s" % (n, result[1][n]))
+                if keep.extract_bib != 0:
+                    if is_doi(result[0][n]):
+                        this_bib_info, a, b, browser   = extract_bib_info([result[0][n]], browser, http, max_pmids=50, silent=True)
+                    else:
+                        this_bib_info, a, b, browser   = extract_bib_info([result[1][n]], browser, http, max_pmids=50, silent=True)
+                else:
+                    this_bib_info                      = empty_bib(mode="spaces")
+
+                collection[0].append(data[i])
+
+                for k in range(2, result_size):
+                    collection[k - 1].append(result[k][n])
+
+                for k in range(0, len(this_bib_info)):
+                    collection[result_size - 1 + k].append(this_bib_info[k][0])
+
+        if silent == False:
+            printProgressBar(i + 1, len(data), prefix=show_string, suffix=remaining_time(start_time=start_time, step=i, max=len(data)), length=50)
+
+    return collection, browser
 
 ##################################################################
 ##################################################################
